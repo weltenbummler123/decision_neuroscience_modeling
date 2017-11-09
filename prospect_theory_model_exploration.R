@@ -5,7 +5,7 @@
 ## Aim: use simulation to find out how loss aversion (lambda) and risk aversion 
 ## (alpha_loss and alpha_gain) behave together
 
-setwd("/home/caroline/Desktop/COGSCI/09_WS_1718/social_and_affective/")
+setwd("/home/caroline/Desktop/git/decision_neuroscience_modeling/")
 
 library(reshape2)
 library(rgl)
@@ -66,8 +66,12 @@ p_gamble = function(mu, u_gamble, u_certain){
 #### 2. Simulate contexts: Construct parameter ranges
 
 # simulated IVs:
-v_certain_pos_range = seq(30, 55, 1)      # v_certain for gain trials (note: in cent!! doesnt work in pound unit, because formular uses exponentiation!!)
-v_certain_neg_range = seq(-55, -30, 1)   # v_loss for gain trials
+v_certain_pos_range = seq(30, 55, 0.01)        # v_certain for gain trials 
+                                               # (!!unit: pence; if using pounds, utility trend reverses 
+                                               # due to exponentiation!)
+#v_certain_pos_range = seq(0.3, 0.55, 1)  
+v_certain_neg_range = seq(-55, -30, 1)         # v_loss for gain trials
+#v_certain_neg_range = seq(-0.55, -0.3, 0.01)
 multiplicative_factor = seq(1.6, 4, 0.01)      # multiplicative factor to construct v_gain & v_loss from v_certain
 
 # free params:
@@ -77,6 +81,8 @@ lambda_range = seq(0.5, 5, 0.5)          # 0.5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5
 
 
 #### 3. Gain trial:
+
+set.seed(1) # set seed for reproducibility
 
 v_certain_pos = sample(v_certain_pos_range, 1)   # this is v_certain_pos, because gain trial
 v_gain = sample(multiplicative_factor, 1) * v_certain_pos
@@ -119,6 +125,14 @@ ggplot(u_gamble_array_melted, aes(lambda, utility_gamble, color=lambda)) +
   )
 ggsave("u_gamble_gain.png",width=10,height=10)
 
+# Observation: 
+# lambda (loss aversion) and alpha_loss (risk aversion for loss trials) have no impact on utility_gamble
+# (this is the expected behavior b/c 2nd term in utility_gamble function falls away when v_loss=0.)
+# utility_gamble increases as as alpha_gain (risk aversion for gain trials) increases.
+# This is also expected, because authors (counterintuitively) defined alpha_gain such, that a **higher** alpha_gain
+# value corresponds to **less risk aversion** whereas **lower** alpha_gain values corresponds to 
+# **more risk aversion** (so we might as well call alpha_gain **riskseekingness** instead) 
+
 ## 3.2 u_certain for gain trials
 
 # Make u_certain array
@@ -154,6 +168,12 @@ ggplot(u_certain_array_melted, aes(lambda, utility_certain, color=lambda)) +
   )
 ggsave("u_certain_gain.png",width=10,height=10)
 
+# Observation: 
+# Just as in utility_gamble, lambda and alpha_loss have no impact on utility_certain
+# Weirdly, utility_certain increases as as alpha_gain (risk aversion for gain trials) increases.
+# The plot looks very similar to the utility_gamble_gain plot.
+# This is unexpected, as I would expect that the utility of choosing the certain option would increase as
+# subjects become more risk-averse (i.e., when alpha_gain is small). 
 
 ## 3.3 p_gamble for gain trials
 
@@ -188,8 +208,9 @@ ggplot(p_gamble_gain_array_melted, aes(u_gamble_gain, p_gamble_gain, color=mu)) 
   )
 ggsave("p_gamble_gain.png",width=20,height=10)
 
-  
 #### 4. Loss trial:
+
+set.seed(1) # set seed for reproducibility
 
 v_certain_neg = sample(v_certain_neg_range, 1)   # this is v_certain_neg, because loss trial
 v_gain = 0
@@ -231,6 +252,17 @@ ggplot(u_gamble_array_melted, aes(lambda, utility_gamble, color=lambda)) +
   )
 ggsave("u_gamble_loss.png",width=10,height=10)
 
+# Observation: 
+# alpha_gain (risk aversion for gain trials) has no impact on utility_gamble
+# (this is the expected behavior b/c 1st term in utility_gamble function falls away when v_gain=0.)
+# utility_gamble increases as as alpha_loss (risk aversion for loss trials) decreases.
+# This is also expected, because authors (this time intuitively) defined alpha_loss such, that a **higher** alpha_loss
+# value corresponds to **more risk aversion** whereas **lower** alpha_gain values corresponds to 
+# **less risk aversion** (-> this is actually conceptualizing **risk aversion**)
+# utility_gamble increases as as lambda (loss aversion) decreases.
+# Is this intuitive/expected? I guess so: If you are more loss-averse, then you are more averse to experiencing
+# the greater loss in gamble trials.
+
 ## 4.2 u_certain for loss trials:
 
 # Make u_certain array
@@ -266,6 +298,14 @@ ggplot(u_certain_array_melted, aes(lambda, utility_certain, color=lambda)) +
   )
 ggsave("u_certain_loss.png",width=10,height=10)
 
+# Observation: 
+# Expectedly, as in utility_gamble_loss, alpha_gain (risk aversion for gain trials) has no impact on utility_gamble
+# utility_gamble increases as as alpha_loss (risk aversion for loss trials) decreases.
+# utility_gamble increases as as lambda (loss aversion) decreases.
+
+# Again, this is not expected. The plot looks very similar to the utility_gamble_loss plot.
+
+# Maybe this is a matter of my intuition of risk?
 
 ## 4.3 p_gamble for loss trials
 
@@ -299,11 +339,3 @@ ggplot(p_gamble_loss_array_melted, aes(u_gamble_loss, p_gamble_loss, color=mu)) 
     "Probability of selecting the gamble in loss trials"
   )
 ggsave("p_gamble_loss.png",width=30,height=10, limitsize = FALSE)
-
-###### THOUGHTS
-
-## On graphs
-
-# 1) u_gamble_gain: no effect of lambda or alpha_gain (obviously); increasing utility as alpha_gain/risk_aversion gets **smaller**
-# 2) u_certain_gain: no effect of lambda or alpha_gain (obviously); increasing utility as alpha_gain/risk_aversion gets **smaller**
-
